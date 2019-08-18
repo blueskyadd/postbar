@@ -1,7 +1,7 @@
 <template>
      <div class="listDetail" ref='scrollList'>
          <div class="detail-header">
-            <div class="blue_kit_left" @click="$router.go(-1)"></div>
+            <div class="blue_kit_left"   @click="$router.go(-1)" ></div>
          </div>
          <scroller v-model="scrollerStatus" lock-x scrollbar-y ref="scroller"
               :use-pullup="showUp" :use-pulldown='false' :pullup-config="upobj" @on-pullup-loading="selPullUp">
@@ -16,7 +16,7 @@
                             <div class="sub-title">
                                 <span class="forumname">二手吧</span>
                                 <span class="split"></span> 
-                                <span class="createtime">{{$route.params.publishTime}}</span>
+                                <span class="createtime">{{$route.query.publishTime}}</span>
                             </div>
                         </div>
                     </header>
@@ -29,19 +29,18 @@
                                     </span>
                                 </div>
                             </div>
-                            <div  class="interaction">
+                            <div  class="interaction" >
                                 <div class="wrap">
                                     <a class="item comment itemonly" @click="upKey">
                                         <input type="text" ref="upKey" style="display:none" @focus="upTheKey">
                                         <i class="icon iconfont icon-xiaoxi"></i>
                                         {{postDetail.postDetailDto.commentNum}}
                                     </a>
-                                    <a class="item comment itemonly">
-                                        
+                                    <a class="item comment itemonly" @click="getShareInfo()">
                                         <i class="iconfont icon-fenxiang1"></i>
                                         {{postDetail.postDetailDto.shareNum}}
                                     </a>
-                                    <a class="item comment itemonly">
+                                    <a class="item comment itemonly" @click="updateLikeCount(postDetail.postDetailDto)">
                                         <i class="icon iconfont icon-dianzan"></i>
                                         {{postDetail.postDetailDto.postChannel}}
                                     </a>
@@ -53,38 +52,41 @@
                             <h3 class="line-bottom line-title border-bottom">评论</h3>
                             <div class="list" v-if="commentList.length >0">
                                 <div class="commentIn" v-for="(item,index) in commentList" :key="index">
-                                    <img class="headImg" v-if="item.commentCreator.image" :src="item.commentCreator.image" alt="">
+                                    <img class="headImg" v-if="item.userInfo" :src="item.userInfo.headImg" alt="">
                                     <div class="commentText line-bottom">
-                                        <p class="name">{{processStr(item.commentCreator.name, 11)}}</p>
+                                        <p class="name" v-if="item.userInfo">{{processStr(item.userInfo.nickName, 11)}}</p>
                                         <div class="commentBox">
                                             <span class="time">{{item.commentTime}}</span>
-                                            <p class="inforMore">
+                                            <!-- <p class="inforMore">
                                                 <span class="del" v-if="item.isMyComment == 1" v-on:click="delComment(item.contentCommentId)"><i class="iconfont icon-caozuo-shanchu1"></i>删除</span>
                                                 <span class="del" v-if="item.isMyComment != 1" v-on:click="replyComment(item.contentCommentId)"><i class="icon iconfont icon-xiaoxi"></i>回复</span>
                                                 <span class="like" v-on:click="comLikeClick(item.clicked,item.clickNum,index,item.contentCommentId)">
                                                 <i class="icon" v-bind:class="{active:item.clicked == 1}"></i>{{item.clickNum}}</span>
-                                            </p>
+                                            </p> -->
                                         </div>
-                                        <p class="textOne">{{item.commentDesc}}</p>
-                                        <div class="reply" v-if="item.parentComment">
+                                        <p class="textOne">{{item.commentContent}}</p>
+                                        <!-- <div class="reply" v-if="item.parentComment">
                                             <p class="name" v-if='item.parentComment.commentCreator && item.parentComment.commentCreator.name'>{{processStr(item.parentComment.commentCreator.name, 11)}}</p>
                                             <p class="title" v-if="item.parentComment">{{item.parentComment.commentDesc}}</p>
-                                        </div>
+                                        </div> -->
                                     </div>
                                 </div>
+                                <div class="noMore " v-if="hintNoMore">没有更多啦~</div>
+                                <div class="noMore " v-if="showAll">已显示全部评论</div>
+                                <div class="noMore border-top" v-if="notComment">暂无评论</div>
+                                <div style="height:2rem;background:transparent"></div>
+                                <!-- <div class="commentIn"></div> -->
                             </div>
-                            <div class="noMore border-top" v-if="isLoading" style="background:none">加载中~</div>
-                            <div class="noMore border-top" v-if="hintNoMore">没有更多啦~</div>
-                            <div class="noMore border-top" v-if="showAll">已显示全部评论</div>
-                            <div class="noMore border-top" v-if="notComment">暂无评论</div>
-                            <div style="height:1.2rem;background:transparent"></div>
+                            <!-- <div class="noMore border-top" v-if="isLoading" style="background:none">加载中~</div> -->
+                            
                         </div>
                     </div>
               </div>
          </scroller>
+         <footer></footer>
          <footer class="border-top">
-             <textarea name="" placeholder="评论一句，前排打call" id="" cols="30" rows="10"></textarea>
-             <button >发送</button>
+             <textarea name="" placeholder="评论一句，前排打call"  v-model="commentContent" id="" cols="30" rows="10"></textarea>
+             <button @click="savePostComment()">发送</button>
          </footer>
          <!-- //大图展 -->
         <div v-transfer-dom v-if="postDetail.postDetailDto">
@@ -94,6 +96,7 @@
 </template>
 <script>
 import { Previewer, TransferDom, Scroller } from 'vux';
+import wx from 'weixin-js-sdk'
 export default {
     name:'listDetail',
     directives: {TransferDom},
@@ -117,8 +120,9 @@ export default {
                 }
             },
             commentList:[ ],//评论
+            commentContent: '',    
             postDetail:{},
-            hintNoMore: true,
+            hintNoMore: false,
             showAll:false,
             notComment:false,
             isLoading:false,
@@ -137,6 +141,7 @@ export default {
                 loadingContent: '加载中...',
                 clsPrefix: 'xs-plugin-pullup-'
             },
+            pagenumber: 1
 
         }
     },
@@ -148,7 +153,7 @@ export default {
     },
     mounted(){
         this.getPostDetail();
-        this.getPostCommentDetail()
+        this.getPostCommentDetail(1)
 
     },
     methods:{
@@ -168,7 +173,34 @@ export default {
         },
         //回复评论
         replyComment(id){
-
+            var params ={
+                "commentContent": this.commentContent,//评价内容
+                "createBy": "",//评论人
+                "parentCommentId": 0,//评论上级主键 默认0 无上级
+                "postId": 0,//帖子主键
+            }
+            this.$http.post(this.$conf.env.savePostComment,params).then(res =>{
+                console.log(res)
+            }).catch(err =>{
+                console.log(err)
+            })
+        },
+        savePostComment(){
+            var params ={
+                "commentContent": this.commentContent,//评价内容
+                "createBy": 0,//评论人
+                "parentCommentId": 0,//评论上级主键 默认0 无上级
+                "postId": this.$route.query.id,//帖子主键
+            }
+            this.$http.post(this.$conf.env.savePostComment,params).then(res =>{
+                console.log(res)
+                this.$vux.toast.text('评论成功');
+                this.commentContent = '';
+                // this.$refs.inputComment.blur();
+                this.getPostCommentDetail();
+            }).catch(err =>{
+                console.log(err)
+            })
         },
         upKey(){
             this.$refs.upKey.click()
@@ -177,12 +209,19 @@ export default {
             console.log('ss')
         },
         selPullUp(){
+            console.log('加载')
+            this.pagenumber += 1;
+            this.getPostCommentDetail(this.pagenumber)
+            this.$nextTick(() => {
+                this.$refs.scroller.reset()
+            })
             console.log('评论加载');
         },
         /**@name 获取帖子详情数据*/
         getPostDetail(){
-            this.$http.get(this.$conf.env.getPostDetail + this.$route.params.id ).then(res =>{
+            this.$http.get(this.$conf.env.getPostDetail + this.$route.query.id ).then(res =>{
                 console.log(res)
+               
                 if(res.data.data.postDetailDto.imgUrlList && res.data.data.postDetailDto.imgUrlList.length>0){
                     var arr = []
                     res.data.data.postDetailDto.imgUrlList.forEach( element =>{
@@ -197,17 +236,78 @@ export default {
             })
         },
         /**@name 获取评论列表 */
-        getPostCommentDetail(){
+        getPostCommentDetail(num){
             var params ={
-                'openId':1,
-                'postId': this.$route.params.id
+                "openId": "0",
+                "pageNo": num,
+                "pageSize": 10,
+                "postId": this.$route.query.id
             }
             this.$http.post(this.$conf.env.getPostCommentDetail, params).then(res =>{
-                
+                 if(res.status == '200'){
+                     if(res.data.data.returnData.postCommentDtoList && res.data.data.returnData.postCommentDtoList.length>0){
+                        this.scrollerStatus.pullupStatus = 'default';
+                        this.commentList = num == 1 ? res.data.data.returnData.postCommentDtoList : this.commentList.concat(res.data.data.returnData.postCommentDtoList)
+                    }else{
+                        num ==1 ? this.notComment = true : this.hintNoMore = true;
+                        this.scrollerStatus.pullupStatus = 'disabled';
+                    }
+                 }else{
+                    num ==1 ? this.notComment = true : this.hintNoMore = true;
+                    this.scrollerStatus.pullupStatus = 'disabled';
+                 }
+                console.log(res.data.data.returnData.postCommentDtoList)
+            }).catch(err =>{
+                num ==1 ? this.notComment = true : this.hintNoMore = true;
+                this.scrollerStatus.pullupStatus = 'disabled';
+                console.log(err)
+            })
+        },
+        //点赞
+        updateLikeCount(item){
+            this.$http.post(this.$conf.env.updateLikeCount,{'openId':'0','postId': item.postId}).then(res =>{
                 console.log(res)
+                this.$vux.toast.text('点赞成功');
+                item.postChannel +=1;
+            }).catch(err =>{
+                this.$vux.toast.text('点赞失败');
+                console.log(err)
+            })
+        },
+        //分享
+        getShareInfo(){
+            this.$http.post(this.$conf.env.getShareInfo,{postId:this.$route.query.id}).then(res =>{
+                console.log(res)
+                this.search(res.data.data)
             }).catch(err =>{
                 console.log(err)
             })
+        },
+        search(data){
+            wx.ready(function () {
+                // //分享朋友圈
+                // wx.onMenuShareTimeline({
+                //     title: data.postDesc,
+                //     desc: data.postDesc,
+                //     imgUrl: data.imageUrl,
+                //     link: data.linkurl,
+                //     trigger: function (res) { },
+                //     success: function (res) { },
+                //     cancel: function (res) { },
+                //     fail: function (res) { }
+                // });
+                // //分享朋友
+                // wx.onMenuShareAppMessage({
+                //     title: data.title,
+                //     desc: data.content,
+                //     imgUrl: data.imgUrl,
+                //     link: data.linkurl,
+                //     trigger: function (res) { },
+                //     success: function (res) { },
+                //     cancel: function (res) { },
+                //     fail: function (res) { }
+                // });
+            });
         }
 
     }
@@ -429,7 +529,7 @@ export default {
                 }
                 .commentText {
                     position: relative;
-                    padding-bottom: .6rem;
+                    // padding-bottom: .6rem;
                     padding-right: .42rem;
                 }
                 .commentBox {
@@ -488,11 +588,11 @@ export default {
                 
             }
             .noMore {
-                margin: -.1rem;
+                margin: -.3rem;
                 font-size: .32rem;
                 color: #999;
                 text-align: center;
-                line-height: 1.32rem;
+                line-height: 1rem;
                 background: #fff;
             }
         }

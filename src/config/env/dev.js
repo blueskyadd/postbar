@@ -13,4 +13,7 @@ module.exports = {
     uploadImg: winchaingroupApi + 'api/image/upload',//上传图片
     savePost: winchaingroupApi + 'api/post/savePost',//发帖
     getPostCommentDetail: winchaingroupApi + 'api/comment/getPostCommentDetail',//获取帖子留言详情
+    savePostComment: winchaingroupApi + 'api/comment/savePostComment',//保存评价
+    getShareInfo: winchaingroupApi + 'api/post/getShareInfo',//分享
+    updateLikeCount: winchaingroupApi + 'api/post/updateLikeCount',//更新帖子点赞数
 }

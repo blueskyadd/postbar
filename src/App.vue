@@ -31,23 +31,7 @@ export default {
     },
   },
   mounted(){
-    var openid = this.$route.query.openid;
-        if(typeof openid !== 'undefined') {
-	          var exp = new Date();
-            exp.setTime(exp.getTime() + 3600 * 1000);//过期时间60分钟
-            document.cookie = 'openid=' + openid + ";expires=" + exp.toGMTString();
-        }
-        // 获取openid
-        if(!this.getCookie('openid')) {
-            // this.$conf.wxLogin
-            this.$http.get(this.$conf.env.wxLogin + '?returnUrl=' + encodeURIComponent('http://192.168.43.236:8080') ).then(res =>{
-                console.log(res)
-            }).catch(err =>{
-                console.log(err)
-            })
-            console.log('this.$conf.wxLogin',this.$conf.wxLogin,this.$conf.env.wxLogin + '&returnUrl=' +  encodeURIComponent('http://192.168.43.236:8080'))
-            // location.href =this.$conf.env.wxLogin + '?returnUrl=' +  encodeURIComponent('http://192.168.43.236:8080');
-        }
+    
   }
 }
 </script>

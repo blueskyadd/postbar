@@ -3,8 +3,8 @@
         <scroller v-model="scrollerStatus"  lock-x scrollbar-y ref="scroller"
             :use-pullup="showUp"   :pullup-config="upobj" @on-pullup-loading="selPullUp">
             <ul>
-                <li @click="golistDetaiil(item)" v-for="(item, index) in poatList" :key="index">
-                    <header>
+                <li  v-for="(item, index) in poatList" :key="index">
+                    <header @click="golistDetaiil(item)">
                         <div class="photoImg"><img :src="item.headImg" alt=""></div>
                         <div  class="content">
                             <h4 class="title">{{item.userName}}</h4> 
@@ -16,9 +16,8 @@
                         </div>
                     </header>
                     <div  class="main-context">
-                        <!-- <p  class="forum-title">今天跟老爸说想买个公路车，他搜索的直接吓到我了今天跟老爸说想买个公路车，他搜索的直接吓到我了</p> -->
-                        <p  class="forum-sub-title">{{item.postDesc}}</p>
-                        <div class="sudoku" >
+                        <p  class="forum-sub-title" @click="golistDetaiil(item)">{{item.postDesc}}</p>
+                        <div class="sudoku" @click="golistDetaiil(item)">
                             <div class="sudoku-wrap">
                                 <span class="img-item" v-for="(imglist, index) in item.postImgList" :key="index" v-if="index < 3">
                                     <img alt="" :src="imglist">
@@ -29,16 +28,16 @@
                             <div class="wrap">
                                 <a class="item comment itemonly">
                                     <i class="icon iconfont icon-xiaoxi"></i>
-                                    {{item.commentNum}}
+                                    {{item.commentNum||0}}
                                 </a>
                                 <a class="item comment itemonly">
                                     
                                     <i class="iconfont icon-fenxiang1"></i>
-                                    {{item.shareNum}}
+                                    {{item.shareNum||0}}
                                 </a>
-                                <a class="item comment itemonly">
+                                <a class="item comment itemonly" @click.stop="updateLikeCount(item)">
                                     <i class="icon iconfont icon-dianzan"></i>
-                                    {{item.likeNum}}
+                                    {{item.likeNum||0}}
                                 </a>
                             </div>
                         </div>
@@ -95,7 +94,7 @@ export default {
     },
     methods:{
         golistDetaiil(item){
-            this.$router.push({name: 'listDetail',params:{id: item.postId,publishTime: item.publishTime}})
+            this.$router.push({path: '/listDetail',query:{id: item.postId,publishTime: item.publishTime}})
         },
         goReleaseContent(){
             this.$router.push({name:'releaseContent'})
@@ -147,12 +146,28 @@ export default {
             }).catch(err =>{
                 console.log(err)
             })
-        }
+        },
+        updateLikeCount(item){
+            this.$http.post(this.$conf.env.updateLikeCount,{'openId':'0','postId': item.postId}).then(res =>{
+                console.log(res)
+                this.$vux.toast.text('点赞成功');
+                item.likeNum +=1;
+            }).catch(err =>{
+                console.log(err)
+            })
+        },
+        getCookie(name) {
+            var arr;
+            var reg = new RegExp('(^| )' +name+"=([^;]*)(;|$)");
+            if(arr=document.cookie.match(reg))
+                return unescape(arr[2]);
+            else
+                return null;
+        },
     }, 
     mounted(){
         this.getPostList(1)
-         console.log('this.$conf.wxLogin',this.$conf.env.wxLogin)
-        
+        //  console.log('this.$conf.wxLogin',this.$conf.env.wxLogin)
         this.$nextTick(() => {
             this.$refs.scroller.reset({top: 0})
             
@@ -160,6 +175,28 @@ export default {
     },
     activated () {
       this.$refs.scroller.reset()
+    },
+    created(){
+        var openid = this.$route.query.openid;
+    // alert(openid)
+        if(typeof openid !== 'undefined') {
+	          var exp = new Date();
+            exp.setTime(exp.getTime() + 3600 * 1000);//过期时间60分钟
+            document.cookie = 'openid=' + openid + ";expires=" + exp.toGMTString();
+        }
+        // 获取openid
+        // alert(this.getCookie('openid'))
+        if(this.getCookie('openid')==null) {
+            // this.$conf.wxLogin
+            this.$http.get(this.$conf.env.wxLogin + '?returnUrl=' + encodeURIComponent('http://192.168.43.236:8080/#/') ).then(res =>{
+                console.log(res.header)
+        // window.location.href =this.$conf.env.wxLogin + '?returnUrl=' + encodeURIComponent('http://192.168.43.236:8080/#/');
+            }).catch(err =>{
+            //     console.log(err)
+            })
+            // console.log('this.$conf.wxLogin',this.$conf.wxLogin,this.$conf.env.wxLogin + '&returnUrl=' +  encodeURIComponent('http://192.168.43.236:8080'))
+            // location.href =this.$conf.env.wxLogin + '?returnUrl=' +  encodeURIComponent('http://192.168.43.236:8080');
+        }
     }
 };
 </script>
