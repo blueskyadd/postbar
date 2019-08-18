@@ -1,24 +1,24 @@
 <template>
-<div class="user-info-login">
-    <span class="user-pic"><img src="https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=1901600690,2735789840&fm=26&gp=0.jpg" alt=""></span>
-    <div class="user-desc">
-        <p class="user-name">
-            <span class="user-name-text">冰镇西瓜40</span> 
-            <svg class="user-sex" style="display: none;">
-                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon_mine_girl_n"></use>
-            </svg> 
-            <svg class="user-sex" style="display: none;">
-                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon_mine_boy_n"></use>
-            </svg>
-        </p>
-        <p class="user-means">查看个人主页和资料编辑</p>
+    <div class="user-info-login">
+        <span class="user-pic"><img src="https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=1901600690,2735789840&fm=26&gp=0.jpg" alt=""></span>
+        <div class="user-desc">
+            <p class="user-name">
+                <span class="user-name-text">冰镇西瓜40</span> 
+                <svg class="user-sex" style="display: none;">
+                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon_mine_girl_n"></use>
+                </svg> 
+                <svg class="user-sex" style="display: none;">
+                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon_mine_boy_n"></use>
+                </svg>
+            </p>
+            <p class="user-means">查看个人主页和资料编辑</p>
+        </div>
+        
     </div>
-</div>
-    
 </template>
 <script>
 export default {
-  name: "userInfo"
+  name: "userInfo",
 };
 </script>
 <style lang="scss" scoped>

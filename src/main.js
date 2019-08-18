@@ -13,6 +13,9 @@ import http from "./track/http.js";
 Vue.prototype.$http = http;
 Vue.prototype.$conf = conf;
 
+import  { LoadingPlugin, ToastPlugin  } from 'vux'
+Vue.use(LoadingPlugin)
+Vue.use(ToastPlugin, {position: 'default'})
 /* eslint-disable no-new */
 
 new Vue({

@@ -5,7 +5,7 @@
          </div>
          <scroller v-model="scrollerStatus" lock-x scrollbar-y ref="scroller"
               :use-pullup="showUp" :use-pulldown='false' :pullup-config="upobj" @on-pullup-loading="selPullUp">
-              <div>
+              <div style="margin-bottom:1rem;">
                   <div class="detail"  v-if="postDetail.userDto" >
                     <header>
                         <div class="photoImg">
@@ -30,18 +30,23 @@
                                 </div>
                             </div>
                             <div  class="interaction">
-                            <div class="wrap">
-                                <a class="item comment itemonly">
-                                    {{postDetail.postDetailDto.commentNum || 0}}
-                                </a>
-                                <a class="item comment itemonly">
-                                    {{postDetail.postDetailDto.shareNum || 0}}
-                                </a>
-                                <a class="item comment itemonly">
-                                    {{postDetail.postDetailDto.likeNum || 0}}
-                                </a>
+                                <div class="wrap">
+                                    <a class="item comment itemonly" @click="upKey">
+                                        <input type="text" ref="upKey" style="display:none" @focus="upTheKey">
+                                        <i class="icon iconfont icon-xiaoxi"></i>
+                                        {{postDetail.postDetailDto.commentNum}}
+                                    </a>
+                                    <a class="item comment itemonly">
+                                        
+                                        <i class="iconfont icon-fenxiang1"></i>
+                                        {{postDetail.postDetailDto.shareNum}}
+                                    </a>
+                                    <a class="item comment itemonly">
+                                        <i class="icon iconfont icon-dianzan"></i>
+                                        {{postDetail.postDetailDto.postChannel}}
+                                    </a>
+                                </div>
                             </div>
-                        </div>
                         </div>
                         <!-- 评论 -->
                         <div class="comment">
@@ -54,8 +59,8 @@
                                         <div class="commentBox">
                                             <span class="time">{{item.commentTime}}</span>
                                             <p class="inforMore">
-                                                <span class="del" v-if="item.isMyComment == 1" v-on:click="delComment(item.contentCommentId)">删除</span>
-                                                <span class="del" v-if="item.isMyComment != 1" v-on:click="replyComment(item.contentCommentId)">回复</span>
+                                                <span class="del" v-if="item.isMyComment == 1" v-on:click="delComment(item.contentCommentId)"><i class="iconfont icon-caozuo-shanchu1"></i>删除</span>
+                                                <span class="del" v-if="item.isMyComment != 1" v-on:click="replyComment(item.contentCommentId)"><i class="icon iconfont icon-xiaoxi"></i>回复</span>
                                                 <span class="like" v-on:click="comLikeClick(item.clicked,item.clickNum,index,item.contentCommentId)">
                                                 <i class="icon" v-bind:class="{active:item.clicked == 1}"></i>{{item.clickNum}}</span>
                                             </p>
@@ -72,10 +77,15 @@
                             <div class="noMore border-top" v-if="hintNoMore">没有更多啦~</div>
                             <div class="noMore border-top" v-if="showAll">已显示全部评论</div>
                             <div class="noMore border-top" v-if="notComment">暂无评论</div>
+                            <div style="height:1.2rem;background:transparent"></div>
                         </div>
                     </div>
               </div>
          </scroller>
+         <footer class="border-top">
+             <textarea name="" placeholder="评论一句，前排打call" id="" cols="30" rows="10"></textarea>
+             <button >发送</button>
+         </footer>
          <!-- //大图展 -->
         <div v-transfer-dom v-if="postDetail.postDetailDto">
             <previewer :list="postDetail.postDetailDto.imgUrlList" ref="previewer" :options="options" @on-index-change="logIndexChange"></previewer>
@@ -90,21 +100,7 @@ export default {
     components: { Previewer, Scroller},
     data(){
         return{
-            list: [{
-                    msrc: 'http://ww1.sinaimg.cn/thumbnail/663d3650gy1fplwu9ze86j20m80b40t2.jpg',
-                    src: 'http://ww1.sinaimg.cn/large/663d3650gy1fplwu9ze86j20m80b40t2.jpg',
-                    w: 800,
-                    h: 400
-                },
-                {
-                    msrc: 'http://ww1.sinaimg.cn/thumbnail/663d3650gy1fplwvqwuoaj20xc0p0t9s.jpg',
-                    src: 'http://ww1.sinaimg.cn/large/663d3650gy1fplwvqwuoaj20xc0p0t9s.jpg',
-                    w: 1200,
-                    h: 900
-                }, {
-                    msrc: 'http://ww1.sinaimg.cn/thumbnail/663d3650gy1fplwwcynw2j20p00b4js9.jpg',
-                    src: 'http://ww1.sinaimg.cn/large/663d3650gy1fplwwcynw2j20p00b4js9.jpg'
-                }],
+            list: [],
             options: {
                 getThumbBoundsFn (index) {
                 // find thumbnail element
@@ -120,26 +116,7 @@ export default {
                 // http://javascript.info/tutorial/coordinates
                 }
             },
-            commentList:[
-                {
-                    'commentCreator':{
-                        'image':'http://ww1.sinaimg.cn/large/663d3650gy1fplwu9ze86j20m80b40t2.jpg',
-                        'name':'张大侠',
-                    },
-                    'commentTime':'2019-02-20',
-                    'isMyComment':'1',
-                    'clickNum':'30',
-                    'commentDesc':'不错奴才的',
-                    'parentComment':{
-                        'commentCreator':{
-                           'name':'叶卿卿' ,
-                           'commentDesc':'百八十度厄u肥肉发'
-                        }
-                    },
-                    'contentCommentId':'09'
-
-                }
-            ],//评论
+            commentList:[ ],//评论
             postDetail:{},
             hintNoMore: true,
             showAll:false,
@@ -170,7 +147,9 @@ export default {
         this.$emit('showheader',true)
     },
     mounted(){
-        this.getPostDetail()
+        this.getPostDetail();
+        this.getPostCommentDetail()
+
     },
     methods:{
         logIndexChange (arg) {
@@ -191,52 +170,44 @@ export default {
         replyComment(id){
 
         },
+        upKey(){
+            this.$refs.upKey.click()
+        },
+        upTheKey(){
+            console.log('ss')
+        },
         selPullUp(){
             console.log('评论加载');
         },
         /**@name 获取帖子详情数据*/
         getPostDetail(){
-            console.log(this.$route.params.id )
-            var res = {
-  "code": "001",
-  "info": "操作成功",
-  "data": {
-    "postDetailDto": {
-      "postId": 1,
-      "postDesc": "测试帖aaa",
-      "postChannel": 0,
-      "imgUrlList": [
-        "https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=1901600690,2735789840&fm=26&gp=0.jpg",
-        "https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=1901600690,2735789840&fm=26&gp=0.jpg",
-        "https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=1901600690,2735789840&fm=26&gp=0.jpg",
-        "https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=1901600690,2735789840&fm=26&gp=0.jpg"
-      ],
-      "shareNum": 0,
-      "commentNum": 0
-    },
-    "userDto": {
-      "openId": "oDvUZ0orKKyaOvEK-OZjPplpH4Sk",
-      "nickName": "tony198x",
-      "headImg": "https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=1901600690,2735789840&fm=26&gp=0.jpg",
-      "sex": 1
-    }
-  },
-  "successful": true
-}
-            // this.$http.get(this.$conf.env.getPostDetail + this.$route.params.id ).then(res =>{
-            //     console.log(res)
-                if(res.data.postDetailDto.imgUrlList && res.data.postDetailDto.imgUrlList.length>0){
+            this.$http.get(this.$conf.env.getPostDetail + this.$route.params.id ).then(res =>{
+                console.log(res)
+                if(res.data.data.postDetailDto.imgUrlList && res.data.data.postDetailDto.imgUrlList.length>0){
                     var arr = []
-                    res.data.postDetailDto.imgUrlList.forEach( element =>{
+                    res.data.data.postDetailDto.imgUrlList.forEach( element =>{
                         var obj = {'src':element}
                         arr.push(obj)
                     })
-                    res.data.postDetailDto.imgUrlList = arr
+                    res.data.data.postDetailDto.imgUrlList = arr
                 }
-                this.postDetail = res.data
-            // }).catch( err =>{
-            //     console.log(err)
-            // })
+                this.postDetail = res.data.data
+            }).catch( err =>{
+                console.log(err)
+            })
+        },
+        /**@name 获取评论列表 */
+        getPostCommentDetail(){
+            var params ={
+                'openId':1,
+                'postId': this.$route.params.id
+            }
+            this.$http.post(this.$conf.env.getPostCommentDetail, params).then(res =>{
+                
+                console.log(res)
+            }).catch(err =>{
+                console.log(err)
+            })
         }
 
     }
@@ -385,6 +356,38 @@ export default {
                     }
                }
           }
+          //点赞
+           //点赞
+          .interaction{
+                margin: 0 .34rem;
+                font-size: .24rem;
+                .wrap{
+                    display: flex;
+                    flex-flow: row wrap;
+                    justify-content: flex-end;
+                    height: .88rem;
+                    line-height: .88rem;
+                    .itemonly{
+                        text-align: right;
+                        display: inline-block;
+                        color: #666;
+                    }
+                    .item{
+                        color: #666;
+                        margin-right: .34rem;
+                        .icon-comment{
+                            position: relative;
+                            top: -1px;
+                            width: .36rem;
+                            height: .36rem;
+                            vertical-align: middle;
+                        }
+                    }
+                    .itemonly{
+                        text-align: right;
+                    }
+                }
+          }
           
       }
       //评论
@@ -494,7 +497,34 @@ export default {
             }
         }
     }
-   
+   footer{
+       position: fixed;
+        width: 100%;
+        height: 1rem;
+        background: #fff;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        justify-content: space-between;
+        padding: 0.1rem .34rem;
+        textarea{
+            font-size: .3rem;
+            border: 1px solid #999;
+            line-height: .4rem;
+            border-radius: .15rem;
+            width: 5.2rem;
+            background: #eee;
+
+        }
+        button{
+            padding: .17rem .2rem;
+            background:#119dfc ;
+            font-size: .3rem;
+            color:#fff;
+            width: 1.3rem;
+            border-radius: .06rem;
+        }
+   }
 }
 
 </style>

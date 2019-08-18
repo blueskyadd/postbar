@@ -11,7 +11,7 @@ export default {
         const headers = {
             headers: {
                 'Content-Type': headerFlag ? 'multipart/form-data' : "application/json;charset=UTF-8",
-                "Authorization":sessionStorage.getItem('jp_token') ?  'JWT ' +  sessionStorage.getItem('jp_token') : '',
+                // "Authorization":sessionStorage.getItem('jp_token') ?  'JWT ' +  sessionStorage.getItem('jp_token') : '',
             }
         }
         return new Promise((resolve, reject) => {
@@ -20,7 +20,7 @@ export default {
             }, (error) => {
                 reject(error)
             });
-        });
+        }); 
     },
     /**
      * GET请求
@@ -31,7 +31,7 @@ export default {
         const headers = {
             headers: {
                 "content-type": "application/json;charset=UTF-8",
-                "Authorization": sessionStorage.getItem('jp_token') ?  'JWT ' +  sessionStorage.getItem('jp_token') : '',
+                // "Authorization": sessionStorage.getItem('jp_token') ?  'JWT ' +  sessionStorage.getItem('jp_token') : '',
             }
         }
         return new Promise((resolve, reject) => {
