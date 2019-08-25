@@ -1,11 +1,12 @@
 <template>
      <div class="listDetail" ref='scrollList'>
-         <div class="detail-header">
+         <div class="detail-header border-bottom">
             <div class="blue_kit_left"   @click="$router.go(-1)" ></div>
+            
          </div>
          <scroller v-model="scrollerStatus" lock-x scrollbar-y ref="scroller"
               :use-pullup="showUp" :use-pulldown='false' :pullup-config="upobj" @on-pullup-loading="selPullUp">
-              <div style="margin-bottom:1rem;">
+              <div id="scrollbar" style="margin-bottom:1rem;">
                   <div class="detail"  v-if="postDetail.userDto" >
                     <header>
                         <div class="photoImg">
@@ -15,8 +16,8 @@
                             <h4 class="title">{{postDetail.userDto.nickName}}</h4> 
                             <div class="sub-title">
                                 <span class="forumname">二手吧</span>
-                                <span class="split"></span> 
-                                <span class="createtime">{{$route.query.publishTime}}</span>
+                                <!-- <span class="split"></span>  -->
+                                <!-- <span class="createtime">{{$route.query.publishTime}}</span> -->
                             </div>
                         </div>
                     </header>
@@ -29,29 +30,12 @@
                                     </span>
                                 </div>
                             </div>
-                            <div  class="interaction" >
-                                <div class="wrap">
-                                    <a class="item comment itemonly" @click="upKey">
-                                        <input type="text" ref="upKey" style="display:none" @focus="upTheKey">
-                                        <i class="icon iconfont icon-xiaoxi"></i>
-                                        {{postDetail.postDetailDto.commentNum}}
-                                    </a>
-                                    <a class="item comment itemonly" @click="getShareInfo()">
-                                        <i class="iconfont icon-fenxiang1"></i>
-                                        {{postDetail.postDetailDto.shareNum}}
-                                    </a>
-                                    <a class="item comment itemonly" @click="updateLikeCount(postDetail.postDetailDto)">
-                                        <i class="icon iconfont icon-dianzan"></i>
-                                        {{postDetail.postDetailDto.postChannel}}
-                                    </a>
-                                </div>
-                            </div>
                         </div>
                         <!-- 评论 -->
                         <div class="comment">
                             <h3 class="line-bottom line-title border-bottom">评论</h3>
-                            <div class="list" v-if="commentList.length >0">
-                                <div class="commentIn" v-for="(item,index) in commentList" :key="index">
+                            <div class="list" >
+                                <div v-if="commentList.length >0" class="commentIn" v-for="(item,index) in commentList" :key="index">
                                     <img class="headImg" v-if="item.userInfo" :src="item.userInfo.headImg" alt="">
                                     <div class="commentText line-bottom">
                                         <p class="name" v-if="item.userInfo">{{processStr(item.userInfo.nickName, 11)}}</p>
@@ -71,9 +55,9 @@
                                         </div> -->
                                     </div>
                                 </div>
-                                <div class="noMore " v-if="hintNoMore">没有更多啦~</div>
-                                <div class="noMore " v-if="showAll">已显示全部评论</div>
+                                <!-- <div class="noMore " v-if="hintNoMore">没有更多啦~</div> -->
                                 <div class="noMore border-top" v-if="notComment">暂无评论</div>
+                                <div class="noMore " v-else>已显示全部评论</div>
                                 <div style="height:2rem;background:transparent"></div>
                                 <!-- <div class="commentIn"></div> -->
                             </div>
@@ -84,23 +68,45 @@
               </div>
          </scroller>
          <footer></footer>
-         <footer class="border-top">
-             <textarea name="" placeholder="评论一句，前排打call"  v-model="commentContent" id="" cols="30" rows="10"></textarea>
+         <footer class="border-top" v-if="isTextarea">
+             <textarea name="" placeholder="友好的交流从此开始"  v-model="commentContent" id="" cols="30" rows="10"></textarea>
              <button @click="savePostComment()">发送</button>
+         </footer>
+         <footer class="border-top" style="justify-content: flex-end;" v-else>
+             <div class="textarea" @click="setTextarea">友好的交流从此开始</div>
+             <div  class="interaction" >
+                <div class="wrap">
+                    <a class="item comment itemonly" @click="upKey">
+                        <input type="text" ref="upKey" style="display:none" @focus="upTheKey">
+                        <i class="icon iconfont icon-xiaoxi"></i>
+                        {{postDetail.postDetailDto.commentNum||0}}
+                    </a>
+                    <a class="item comment itemonly" @click="getShareInfo(item)">
+                        <i class="iconfont icon-fenxiang1"></i>
+                        {{postDetail.postDetailDto.shareNum||0}}
+                    </a>
+                    <a class="item comment itemonly" :style="{color: isDianzan ? '#119dfc' : ''}" @click="updateLikeCount(postDetail.postDetailDto)">
+                        <i v-if="!isDianzan" class="icon iconfont icon-dianzan"></i>
+                        <i v-else class="icon iconfont icon-dianzantianchong-"></i>
+                        {{postDetail.postDetailDto.likeNum||0}}
+                    </a>
+                </div>
+            </div>
          </footer>
          <!-- //大图展 -->
         <div v-transfer-dom v-if="postDetail.postDetailDto">
             <previewer :list="postDetail.postDetailDto.imgUrlList" ref="previewer" :options="options" @on-index-change="logIndexChange"></previewer>
         </div>
+        <alert v-model="showSearchLink" title="分享" content="点击右上角按钮进行分享吧"></alert>
      </div>
 </template>
 <script>
-import { Previewer, TransferDom, Scroller } from 'vux';
+import { Previewer, TransferDom, Scroller, Alert, Popover} from 'vux';
 import wx from 'weixin-js-sdk'
 export default {
     name:'listDetail',
     directives: {TransferDom},
-    components: { Previewer, Scroller},
+    components: { Previewer, Scroller, Alert, Popover},
     data(){
         return{
             list: [],
@@ -132,31 +138,44 @@ export default {
                 pullupStatus: 'default'
             },
             upobj: {
-                content: '请上拉刷新数据',
+                content: '',
                 pullUpHeight: 60,
                 height: 40,
                 autoRefresh: false,
-                downContent: '请上拉刷新数据',
-                upContent: '请上拉刷新数据',
+                downContent: '',
+                upContent: '',
                 loadingContent: '加载中...',
                 clsPrefix: 'xs-plugin-pullup-'
             },
-            pagenumber: 1
-
+            pagenumber: 1,
+            isDianzan: false,
+            showSearchLink:false,
+            isTextarea: false
         }
     },
     created(){
-        this.$emit('showheader',false)
+        this.$emit('showheader',false);
+        this.getShareInfo()
     },
     destroyed(){
         this.$emit('showheader',true)
     },
     mounted(){
+        //分享
         this.getPostDetail();
-        this.getPostCommentDetail(1)
-
+        this.getPostCommentDetail(1);
+        var that = this;
+        setTimeout(()=>{
+            var box = document.getElementById('scrollbar')
+            box.addEventListener('touchstart', function (e) {
+                that.isTextarea = false;
+            })
+        },100)
     },
     methods:{
+        aaa(data,key){
+            console.log("aaaaaaaaaa",data,key)
+        },
         logIndexChange (arg) {
             console.log(arg)
         },
@@ -171,36 +190,43 @@ export default {
         },
         delComment(id) {//删除评论
         },
-        //回复评论
-        replyComment(id){
-            var params ={
-                "commentContent": this.commentContent,//评价内容
-                "createBy": "",//评论人
-                "parentCommentId": 0,//评论上级主键 默认0 无上级
-                "postId": 0,//帖子主键
-            }
-            this.$http.post(this.$conf.env.savePostComment,params).then(res =>{
-                console.log(res)
-            }).catch(err =>{
-                console.log(err)
-            })
+        setTextarea(){
+            this.isTextarea = true;
         },
         savePostComment(){
-            var params ={
-                "commentContent": this.commentContent,//评价内容
-                "createBy": 0,//评论人
-                "parentCommentId": 0,//评论上级主键 默认0 无上级
-                "postId": this.$route.query.id,//帖子主键
+            var openid = this.$route.query.openid;
+            if(typeof openid !== 'undefined') {
+                var exp = new Date();
+                exp.setTime(exp.getTime() + 3600 * 1000);//过期时间60分钟
+                document.cookie = 'openid=' + openid + ";expires=" + exp.toGMTString();
             }
-            this.$http.post(this.$conf.env.savePostComment,params).then(res =>{
-                console.log(res)
-                this.$vux.toast.text('评论成功');
-                this.commentContent = '';
-                // this.$refs.inputComment.blur();
-                this.getPostCommentDetail();
-            }).catch(err =>{
-                console.log(err)
-            })
+            // 获取openid
+            if(this.getCookie('openid')==null) {
+                window.location.href =this.$conf.env.wxLogin + '?returnUrl=' + encodeURIComponent('http://forum.vxiangwang.com/#/');
+            }else{
+                var params ={
+                    "commentContent": this.commentContent,//评价内容
+                    "createBy": this.getCookie('openid'),//评论人
+                    "parentCommentId": 0,//评论上级主键 默认0 无上级
+                    "postId": this.$route.query.id,//帖子主键
+                    "openId": this.getCookie('openid'),//微信用户openID
+                }
+                this.$http.post(this.$conf.env.savePostComment,params).then(res =>{
+                    console.log(res)
+                    this.$vux.toast.text('评论成功');
+                    this.commentContent = '';
+                    // this.$refs.inputComment.blur();
+                    this.getPostCommentDetail();
+                }).catch(err =>{
+                    console.log(err)
+                })
+            }
+            
+        },
+        showModuleAuto () {
+        setTimeout(() => {
+            AlertModule.hide()
+        }, 3000)
         },
         upKey(){
             this.$refs.upKey.click()
@@ -235,10 +261,18 @@ export default {
                 console.log(err)
             })
         },
+        getCookie(name) {
+            var arr;
+            var reg = new RegExp('(^| )' +name+"=([^;]*)(;|$)");
+            if(arr=document.cookie.match(reg))
+                return unescape(arr[2]);
+            else
+                return null;
+        },
         /**@name 获取评论列表 */
         getPostCommentDetail(num){
             var params ={
-                "openId": "0",
+                "openId": this.getCookie('openid'),
                 "pageNo": num,
                 "pageSize": 10,
                 "postId": this.$route.query.id
@@ -265,10 +299,17 @@ export default {
         },
         //点赞
         updateLikeCount(item){
-            this.$http.post(this.$conf.env.updateLikeCount,{'openId':'0','postId': item.postId}).then(res =>{
+            if(this.isDianzan) return;
+            this.$http.post(this.$conf.env.updateLikeCount,{'openId': this.getCookie('openid'),'postId': item.postId}).then(res =>{
                 console.log(res)
-                this.$vux.toast.text('点赞成功');
-                item.postChannel +=1;
+                if(res.data.code == '001'){
+                    this.$vux.toast.text('点赞成功');
+                    this.isDianzan = true
+                    item.likeNum +=1;
+                }else{
+                    this.$vux.toast.text('你已经点过赞了');
+                }
+                
             }).catch(err =>{
                 this.$vux.toast.text('点赞失败');
                 console.log(err)
@@ -284,31 +325,58 @@ export default {
             })
         },
         search(data){
+        this.$http.get(this.$conf.env.getWxJsSdkSignature  + "?url=" +encodeURIComponent(window.location.href)).then(res=>{
+            
+            console.log(res.data.data.signature)
+            wx.config({
+                debug: true,
+                appId: res.data.data.appId,
+                timestamp: res.data.data.timestamp,
+                nonceStr: res.data.data.nonceStr,
+                signature: res.data.data.signature,
+                jsApiList: [
+                    'onMenuShareTimeline',
+                    'onMenuShareAppMessage',
+                    'getLocation'
+                ]
+            });
+            this.showSearchLink = true
+            console.log(data.imageUrl)
+            alert(JSON.stringify(data))
+            var that =this
             wx.ready(function () {
                 // //分享朋友圈
-                // wx.onMenuShareTimeline({
-                //     title: data.postDesc,
-                //     desc: data.postDesc,
-                //     imgUrl: data.imageUrl,
-                //     link: data.linkurl,
-                //     trigger: function (res) { },
-                //     success: function (res) { },
-                //     cancel: function (res) { },
-                //     fail: function (res) { }
-                // });
+                wx.onMenuShareTimeline({
+                    title: data.postDesc,
+                    desc: data.postDesc,
+                    imgUrl: data.imageUrl,
+                    link: encodeURIComponent(window.location.href),
+                    // trigger: function (res) {alert('trigger') },
+                    success: function (res) {alert('分享成功回掉');that.updateShareCount()},
+                    // cancel: function (res) {alert('cencel') },
+                    fail: function (res) { alert('fbbbbbbbbbbbbbbbbbbbbbbil')}
+                });
                 // //分享朋友
-                // wx.onMenuShareAppMessage({
-                //     title: data.title,
-                //     desc: data.content,
-                //     imgUrl: data.imgUrl,
-                //     link: data.linkurl,
-                //     trigger: function (res) { },
-                //     success: function (res) { },
-                //     cancel: function (res) { },
-                //     fail: function (res) { }
-                // });
+                wx.onMenuShareAppMessage({
+                    title: data.postDesc||'没有拿到标题',
+                    desc: data.postDesc||'没有拿到标题',
+                    imgUrl: data.imageUrl,
+                    link: encodeURIComponent(window.location.href),
+                    // trigger: function (res) { },
+                    success: function (res) {alert('分享成功回掉');that.updateShareCount()},
+                    cancel: function (res) { alert('此处分享失败')},
+                    fail: function (res) { alert('fbbbbbbbbbbbbbbbbbbbbbbil')}
+                });
             });
-        }
+        })
+        },
+        updateShareCount(flag){
+            this.$http.http(this.$conf.env.updateShareCount, params).then(res =>{
+                flag?this.$vux.toast.text('成功分享给好友'):this.$vux.toast.text('成功到朋友圈');
+            }).catch(err =>{
+                this.$vux.toast.text('分享失败')
+            })
+        },
 
     }
 }
@@ -341,6 +409,12 @@ export default {
             
         }
         
+    }
+    .weui-dialog__hd{
+        padding: 0;
+    }
+    .weui-dialog__btn_primary{
+        color: #119dfc;
     }
     .detail{
         width: 100%;
@@ -458,36 +532,7 @@ export default {
           }
           //点赞
            //点赞
-          .interaction{
-                margin: 0 .34rem;
-                font-size: .24rem;
-                .wrap{
-                    display: flex;
-                    flex-flow: row wrap;
-                    justify-content: flex-end;
-                    height: .88rem;
-                    line-height: .88rem;
-                    .itemonly{
-                        text-align: right;
-                        display: inline-block;
-                        color: #666;
-                    }
-                    .item{
-                        color: #666;
-                        margin-right: .34rem;
-                        .icon-comment{
-                            position: relative;
-                            top: -1px;
-                            width: .36rem;
-                            height: .36rem;
-                            vertical-align: middle;
-                        }
-                    }
-                    .itemonly{
-                        text-align: right;
-                    }
-                }
-          }
+          
           
       }
       //评论
@@ -604,17 +649,25 @@ export default {
         background: #fff;
         bottom: 0;
         left: 0;
+        // align-items: center;
         display: flex;
         justify-content: space-between;
         padding: 0.1rem .34rem;
-        textarea{
+        textarea, .textarea{
             font-size: .3rem;
-            border: 1px solid #999;
-            line-height: .4rem;
-            border-radius: .15rem;
+            // border: 1px solid #ddd;
+            line-height: .35rem;
+            border-radius: .5rem;
             width: 5.2rem;
-            background: #eee;
+            background: #f5f5f5;
+            padding: 0.15rem .25rem;
 
+        }
+        .textarea{
+            width:3rem;
+            font-size: .3rem;
+            flex: 1;
+            color: #999;
         }
         button{
             padding: .17rem .2rem;
@@ -625,6 +678,67 @@ export default {
             border-radius: .06rem;
         }
    }
+//    .popover-content{
+//         position: fixed;
+//         right: .4rem;
+//         bottom: 2.4rem;
+//         display: flex;
+//         background: #fff;
+//         border-radius: .5rem;
+//         overflow: hidden;
+//         height: 1rem;
+//        button{
+//            width: 1rem;
+//             border:0;
+//             height: 1rem;
+//             border-radius: 50%;
+//             display: flex;
+//             justify-content: center;
+//             align-items: center;
+//             background: #119dfc;
+           
+//             img{
+//                 width:80%;
+//                 height: 80%;
+//             }
+//        }
+        .interaction{
+            margin: 0 0 0 .34rem;
+            font-size: .24rem;
+            // width: 2.7rem;
+            
+            .wrap{
+                display: flex;
+                flex-flow: row wrap;
+                justify-content: flex-end;
+                height: .88rem;
+                line-height: .88rem;
+            .itemonly{
+                text-align: right;
+                display: inline-block;
+                color: #666;
+                i{
+                    font-size: .4rem;
+                }
+            }
+            .item{
+                color: #666;
+                margin-right: .2rem;
+                .icon-comment{
+                    position: relative;
+                    top: -1px;
+                    width: .36rem;
+                    height: .36rem;
+                    vertical-align: middle;
+                }
+            }
+            .itemonly{
+                text-align: right;
+            }
+        }
+    }
+        
+//    }
 }
 
 </style>

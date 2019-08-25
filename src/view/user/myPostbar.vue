@@ -1,10 +1,13 @@
 <template>
-    <div class="post_list">
-        <scroller v-model="scrollerStatus"  lock-x scrollbar-y ref="scroller"
+    <div class="my_post_list">
+        <div class="detail-header border-bottom">
+            <div class="blue_kit_left"   @click="$router.go(-1)" ></div>
+         </div>
+        <scroller v-model="scrollerStatus" :top='88' lock-x scrollbar-y ref="scroller"
             :use-pullup="showUp"   :pullup-config="upobj" @on-pullup-loading="selPullUp">
             <ul>
-                <li  v-for="(item, index) in poatList" :key="index"  @click="golistDetaiil(item)">
-                    <header>
+                <li  v-for="(item, index) in poatList" :key="index" >
+                    <header @click="golistDetaiil(item)">
                         <div class="photoImg"><img :src="item.headImg" alt=""></div>
                         <div  class="content">
                             <h4 class="title">{{item.userName}}</h4> 
@@ -15,9 +18,9 @@
                             </div>
                         </div>
                     </header>
-                    <div  class="main-context">
-                        <p  class="forum-sub-title" >{{item.postDesc}}</p>
-                        <div class="sudoku">
+                    <div  class="main-context" >
+                        <p  class="forum-sub-title" @click="golistDetaiil(item)">{{item.postDesc}}</p>
+                        <div class="sudoku" @click="golistDetaiil(item)">
                             <div class="sudoku-wrap">
                                 <span class="img-item" v-for="(imglist, index) in item.postImgList" :key="index" v-if="index < 3">
                                     <img alt="" :src="imglist">
@@ -33,10 +36,13 @@
                                 <a class="item comment itemonly">
                                     <i class="iconfont icon-fenxiang1"></i>
                                     {{item.shareNum||0}}
-                                </a>    
-                                <a class="item comment itemonly" :style="{color: item.isDianzan? '#119dfc':''}">
+                                </a>
+                                <a class="item comment itemonly" :style="{color: item.isDianzan? '#119dfc':''}" >
                                     <i class="icon iconfont icon-dianzan"></i>
                                     {{item.likeNum||0}}
+                                </a>
+                                <a class="item comment itemonly" @click.stop="deleteMyPost(item,index)">
+                                    <i class="iconfont icon-caozuo-shanchu1 "></i>
                                 </a>
                             </div>
                         </div>
@@ -49,15 +55,14 @@
         </scroller>
         <loading v-model="showloading" :text="textloading"></loading>
         <button @click.stop="goReleaseContent"><img src="../../assets/img/issueLu.png" alt=""></button>
-        <alert v-model="showSearchLink" title="分享" content="点击右上角按钮进行分享吧"></alert>
     </div>
 </template>
 <script>
-import {Scroller, Loading, LoadMore,Alert } from 'vux';
+import {Scroller, Loading, LoadMore } from 'vux';
 import wx from 'weixin-js-sdk' 
 export default {
-    name:'index',
-    components:{Scroller, Loading, LoadMore,Alert},
+    name:'myPostbar',
+    components:{Scroller, Loading, LoadMore},
     data(){
         return{
             poatList:[],
@@ -91,28 +96,33 @@ export default {
             },
             pagenumber: 1,
             isLoader: false,
-            isDianzan:false,
-            showSearchLink: false
+            isDianzan:false
         }
     },
+    created(){
+        this.$emit('showheader',false)
+    },
+    destroyed(){
+        this.$emit('showheader',true)
+    },  
     methods:{
         golistDetaiil(item){
-            this.$router.push({path: '/listDetail',query:{id: item.postId}})
+            this.$router.push({path: '/listDetail',query:{id: item.postId,publishTime: item.publishTime}})
         },
         goReleaseContent(){
            
-            var openid = this.$route.query.openid;
-            if(typeof openid !== 'undefined') {
-                var exp = new Date();
-                exp.setTime(exp.getTime() + 3600 * 1000);//过期时间60分钟
-                document.cookie = 'openid=' + openid + ";expires=" + exp.toGMTString();
-            }
-            // 获取openid
-            if(this.getCookie('openid')==null) {
-                window.location.href =this.$conf.env.wxLogin + '?returnUrl=' + encodeURIComponent('http://forum.vxiangwang.com');
-            }else{
+            // var openid = this.$route.query.openid;
+            // if(typeof openid !== 'undefined') {
+            //     var exp = new Date();
+            //     exp.setTime(exp.getTime() + 3600 * 1000);//过期时间60分钟
+            //     document.cookie = 'openid=' + openid + ";expires=" + exp.toGMTString();
+            // }
+            // // 获取openid
+            // if(this.getCookie('openid')==null) {
+            //     window.location.href =this.$conf.env.wxLogin + '?returnUrl=' + encodeURIComponent('http://forum.vxiangwang.com/#/');
+            // }else{
                 this.$router.push({name:'releaseContent'})
-            }
+            // }
         },
         
         selPullUp () {
@@ -128,11 +138,11 @@ export default {
             console.log(number)
             var params = {
             	"channelCode": 0,//帖子频道 默认0 二手
-                "openId": '',//用户ID
+                "openId": this.getCookie('openid'),//用户ID
                 "pageNo": number,//页码
                 "pageSize": 10,//pageSize
             }
-            this.$http.post(this.$conf.env.getPostList, params).then(res =>{
+            this.$http.post(this.$conf.env.getMyPostList, params).then(res =>{
             console.log('aaaa')
                 if(res.status == '200'){
                     if(res.data.code == '001'){
@@ -168,11 +178,19 @@ export default {
         },
         updateLikeCount(item){
             if(item.isDianzan) return;
-            this.$http.post(this.$conf.env.updateLikeCount,{'openId':this.getCookie('openid'),'postId': item.postId}).then(res =>{
+            this.$http.post(this.$conf.env.updateLikeCount,{'openId':'0','postId': item.postId}).then(res =>{
                 console.log(res)
                 this.$vux.toast.text('点赞成功');
                 item.isDianzan = true;
                 item.likeNum +=1;
+            }).catch(err =>{
+                console.log(err)
+            })
+        },
+        deleteMyPost(item,index){
+            this.$http.get(this.$conf.env.deleteMyPost+'?openId=' + this.getCookie("openid") +'&postId=' + item.postId).then(res =>{
+                this.$vux.toast.text('删除成功');
+                this.poatList.splice(index, 1);
             }).catch(err =>{
                 console.log(err)
             })
@@ -185,40 +203,111 @@ export default {
             else
                 return null;
         },
+           //分享
+        getShareInfo(item){
+            this.$http.post(this.$conf.env.getShareInfo,{postId:item.postId}).then(res =>{
+                console.log(res)
+                this.search(res.data.data)
+            }).catch(err =>{
+                console.log(err)
+            })
+        },
+        search(data){
+        this.$http.get(this.$conf.env.getWxJsSdkSignature  + "?url=" +encodeURIComponent(window.location.href)).then(res=>{
+            
+            console.log(res.data.data.signature)
+            wx.config({
+                debug: true,
+                appId: res.data.data.appId,
+                timestamp: res.data.data.timestamp,
+                nonceStr: res.data.data.nonceStr,
+                signature: res.data.data.signature,
+                jsApiList: [
+                    'onMenuShareTimeline',
+                    'onMenuShareAppMessage',
+                    'getLocation'
+                ]
+            });
+            console.log(data.postDesc)
+            wx.ready(function () {
+                // //分享朋友圈
+                wx.onMenuShareTimeline({
+                    title: data.postDesc,
+                    desc: data.postDesc,
+                    imgUrl: data.imageUrl,
+                    link: res.data.data.url,
+                    trigger: function (res) {console.lg('trigger') },
+                    success: function (res) {console.log('success') },
+                    cancel: function (res) {console.log('cencel') },
+                    fail: function (res) { console.log('fail')}
+                });
+                // //分享朋友
+                wx.onMenuShareAppMessage({
+                    title: data.postDesc,
+                    desc: data.postDesc,
+                    imgUrl: data.imageUrl,
+                    link: res.data.data.url,
+                    trigger: function (res) { },
+                    success: function (res) { },
+                    cancel: function (res) { },
+                    fail: function (res) { }
+                });
+            });
+        })
+           
+        }
     },
     activated () {
       this.$refs.scroller.reset()
     },
     mounted(){
         this.getPostList(1)
+        //  console.log('this.$conf.wxLogin',this.$conf.env.wxLogin)
         this.$nextTick(() => {
             this.$refs.scroller.reset({top: 0})
+            
         })
         var openid = this.$route.query.openid;
+        // alert(openid)
         if(typeof openid !== 'undefined') {
 	          var exp = new Date();
             exp.setTime(exp.getTime() + 3600 * 1000);//过期时间60分钟
             document.cookie = 'openid=' + openid + ";expires=" + exp.toGMTString();
         }
+        // 获取openid
+        // alert(this.getCookie('openid'))
         if(this.getCookie('openid')==null) {
-            window.location.href =this.$conf.env.wxLogin + '?returnUrl=' + encodeURIComponent('http://forum.vxiangwang.com');
+            // window.location.href =this.$conf.env.wxLogin + '?returnUrl=' + encodeURIComponent('http://forum.vxiangwang.com/#/');
         }
     }
 };
 </script>
 <style lang="scss">
-.post_list {
-    height: calc(100% - .88rem);
+.my_post_list {
+    height: 100%;
+    // margin-bottom: .1rem;
     overflow: hidden;
     .xs-plugin-pulldown-container, .xs-plugin-pullup-container{
         font-size: .32rem;
         color: #666;
     }
-    .weui-dialog__hd{
-        padding: 0;
-    }
-    .weui-dialog__btn_primary{
-        color: #119dfc;
+    .detail-header{
+        height: .88rem;
+        line-height: .88rem;
+        color: #000;
+        background: #fff;
+        padding: 0 .34rem;
+        display: flex;
+        align-items: center;
+        // text-align: center;
+        div{
+            height: .24rem;
+            width: .24rem;
+            transform:rotate(135deg);
+            border-bottom: 1px solid #000;
+            border-right: 1px solid #000;
+            
+        }
     }
   ul {
       height: 100%;

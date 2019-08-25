@@ -16,4 +16,9 @@ module.exports = {
     savePostComment: winchaingroupApi + 'api/comment/savePostComment',//保存评价
     getShareInfo: winchaingroupApi + 'api/post/getShareInfo',//分享
     updateLikeCount: winchaingroupApi + 'api/post/updateLikeCount',//更新帖子点赞数
+    getWxJsSdkSignature:winchaingroupApi + 'api/wx/getWxJsSdkSignature',//微信分享
+    getWxUserInfo: winchaingroupApi + 'api/wx/getWxUserInfo',//获取用户信息
+    getMyPostList: winchaingroupApi + 'api/post/getMyPostList',//获取用户个人中心帖子列表(支持分页)
+    deleteMyPost: winchaingroupApi + 'api/post/deleteMyPost',//删除我的帖子
+    updateShareCount: winchaingroupApi + 'api/post/updateShareCount',//更新帖子分享数
 }

@@ -101,7 +101,7 @@ export default {
              this.$vux.loading.show()
             var params = {
                 "mediaUrl": mediaUrl,//图片/视频地址 多个以英文逗号分隔
-                "openId": "oDvUZ0orKKyaOvEK-OZjPplpH4Sk",//微信用户openID
+                "openId": this.getCookie('openid'),//微信用户openID
                 "postChannel": 0,//帖子频道 0 二手
                 "postDesc": this.contents//帖子内容
             }
@@ -112,6 +112,14 @@ export default {
             }).catch(err =>{
                 console.log(err)
             })
+        },
+        getCookie(name) {
+            var arr;
+            var reg = new RegExp('(^| )' +name+"=([^;]*)(;|$)");
+            if(arr=document.cookie.match(reg))
+                return unescape(arr[2]);
+            else
+                return null;
         },
         monitoring(){
             if(this.detailphone.length == 0){

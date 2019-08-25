@@ -15,6 +15,7 @@ export default {
             }
         }
         return new Promise((resolve, reject) => {
+            axios.defaults.withCredentials = true;
             axios.post(url , request, headers).then((response) => {
                 resolve(response)
             }, (error) => {
@@ -35,6 +36,7 @@ export default {
             }
         }
         return new Promise((resolve, reject) => {
+            axios.defaults.withCredentials = true;
             axios.get(url, headers, {
                 params: request
             }).then((response) => {
