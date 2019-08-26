@@ -102,7 +102,8 @@
 </template>
 <script>
 import { Previewer, TransferDom, Scroller, Alert, Popover} from 'vux';
-import wx from 'weixin-js-sdk'
+import wx from 'weixin-js-sdk';
+import wxapi from '../../components/sdk';
 export default {
     name:'listDetail',
     directives: {TransferDom},
@@ -315,66 +316,28 @@ export default {
                 console.log(err)
             })
         },
-        //分享
+        processStr(str, n) {
+            var l = str.length;
+            if (l <= n) return str;
+            return str.slice(0, l - (l - n));
+        },
         getShareInfo(){
-            this.$http.post(this.$conf.env.getShareInfo,{postId:this.$route.query.id}).then(res =>{
-                console.log(res)
-                this.search(res.data.data)
+            this.$http.post(this.$conf.env.getShareInfo,{postId:this.$route.query.id}).then( option=>{
+                this.$http.get(this.$conf.env.getWxJsSdkSignature  + "?url=" +encodeURIComponent(window.location.href)).then(res =>{
+                    var optionObj={
+                        title: this.processStr(option.data.data.postDesc, 7),
+                        link: encodeURIComponent(window.location.href),
+                        imgUrl: option.data.data.imageUrl,
+                        desc: option.data.data.postDesc
+                    }
+                    var params ={
+                        "openId":this.getCookie('openid'),
+                        "postId":this.$route.query.id
+                    }
+                    wxapi.wxRegister(res.data.data,optionObj,this,params);//data是微信配置信息，option是分享要配置的内容
+                })
             }).catch(err =>{
                 console.log(err)
-            })
-        },
-        search(data){
-        this.$http.get(this.$conf.env.getWxJsSdkSignature  + "?url=" +encodeURIComponent(window.location.href)).then(res=>{
-            
-            console.log(res.data.data.signature)
-            wx.config({
-                debug: true,
-                appId: res.data.data.appId,
-                timestamp: res.data.data.timestamp,
-                nonceStr: res.data.data.nonceStr,
-                signature: res.data.data.signature,
-                jsApiList: [
-                    'onMenuShareTimeline',
-                    'onMenuShareAppMessage',
-                    'getLocation'
-                ]
-            });
-            this.showSearchLink = true
-            console.log(data.imageUrl)
-            alert(JSON.stringify(data))
-            var that =this
-            wx.ready(function () {
-                // //分享朋友圈
-                wx.onMenuShareTimeline({
-                    title: data.postDesc,
-                    desc: data.postDesc,
-                    imgUrl: data.imageUrl,
-                    link: encodeURIComponent(window.location.href),
-                    // trigger: function (res) {alert('trigger') },
-                    success: function (res) {alert('分享成功回掉');that.updateShareCount()},
-                    // cancel: function (res) {alert('cencel') },
-                    fail: function (res) { alert('fbbbbbbbbbbbbbbbbbbbbbbil')}
-                });
-                // //分享朋友
-                wx.onMenuShareAppMessage({
-                    title: data.postDesc||'没有拿到标题',
-                    desc: data.postDesc||'没有拿到标题',
-                    imgUrl: data.imageUrl,
-                    link: encodeURIComponent(window.location.href),
-                    // trigger: function (res) { },
-                    success: function (res) {alert('分享成功回掉');that.updateShareCount()},
-                    cancel: function (res) { alert('此处分享失败')},
-                    fail: function (res) { alert('fbbbbbbbbbbbbbbbbbbbbbbil')}
-                });
-            });
-        })
-        },
-        updateShareCount(flag){
-            this.$http.http(this.$conf.env.updateShareCount, params).then(res =>{
-                flag?this.$vux.toast.text('成功分享给好友'):this.$vux.toast.text('成功到朋友圈');
-            }).catch(err =>{
-                this.$vux.toast.text('分享失败')
             })
         },
 
