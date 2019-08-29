@@ -57,7 +57,8 @@
                                 </div>
                                 <!-- <div class="noMore " v-if="hintNoMore">没有更多啦~</div> -->
                                 <div class="noMore border-top" v-if="notComment">暂无评论</div>
-                                <div class="noMore " v-else>已显示全部评论</div>
+                                <div class="noMore " v-if="hintNoMore">已显示全部评论</div>
+                                <div class="noMore border-top" v-if="isLoading" >加载中~</div>
                                 <div style="height:2rem;background:transparent"></div>
                                 <!-- <div class="commentIn"></div> -->
                             </div>
@@ -85,8 +86,8 @@
                         <i class="iconfont icon-fenxiang1"></i>
                         {{postDetail.postDetailDto.shareNum||0}}
                     </a>
-                    <a class="item comment itemonly" :style="{color: isDianzan ? '#119dfc' : ''}" @click="updateLikeCount(postDetail.postDetailDto)">
-                        <i v-if="!isDianzan" class="icon iconfont icon-dianzan"></i>
+                    <a class="item comment itemonly" :style="{color: postDetail.alreadyLikePost ? '#119dfc' : ''}" @click="updateLikeCount(postDetail.postDetailDto)">
+                        <i v-if="!postDetail.alreadyLikePost" class="icon iconfont icon-dianzan"></i>
                         <i v-else class="icon iconfont icon-dianzantianchong-"></i>
                         {{postDetail.postDetailDto.likeNum||0}}
                     </a>
@@ -143,8 +144,8 @@ export default {
                 pullUpHeight: 60,
                 height: 40,
                 autoRefresh: false,
-                downContent: '',
-                upContent: '',
+                downContent: '加载中..',
+                upContent: '加载中..',
                 loadingContent: '加载中...',
                 clsPrefix: 'xs-plugin-pullup-'
             },
@@ -216,8 +217,7 @@ export default {
                     console.log(res)
                     this.$vux.toast.text('评论成功');
                     this.commentContent = '';
-                    // this.$refs.inputComment.blur();
-                    this.getPostCommentDetail();
+                    this.getPostCommentDetail(1);
                 }).catch(err =>{
                     console.log(err)
                 })
@@ -238,6 +238,7 @@ export default {
         selPullUp(){
             console.log('加载')
             this.pagenumber += 1;
+            
             this.getPostCommentDetail(this.pagenumber)
             this.$nextTick(() => {
                 this.$refs.scroller.reset()
@@ -246,7 +247,7 @@ export default {
         },
         /**@name 获取帖子详情数据*/
         getPostDetail(){
-            this.$http.get(this.$conf.env.getPostDetail + this.$route.query.id ).then(res =>{
+            this.$http.get(this.$conf.env.getPostDetail + this.$route.query.id +'&openId=' + this.getCookie('openid')).then(res =>{
                 console.log(res)
                
                 if(res.data.data.postDetailDto.imgUrlList && res.data.data.postDetailDto.imgUrlList.length>0){
@@ -272,6 +273,8 @@ export default {
         },
         /**@name 获取评论列表 */
         getPostCommentDetail(num){
+            
+            this.isLoading = true;
             var params ={
                 "openId": this.getCookie('openid'),
                 "pageNo": num,
@@ -280,20 +283,25 @@ export default {
             }
             this.$http.post(this.$conf.env.getPostCommentDetail, params).then(res =>{
                  if(res.status == '200'){
+                     this.isLoading = false;
                      if(res.data.data.returnData.postCommentDtoList && res.data.data.returnData.postCommentDtoList.length>0){
                         this.scrollerStatus.pullupStatus = 'default';
                         this.commentList = num == 1 ? res.data.data.returnData.postCommentDtoList : this.commentList.concat(res.data.data.returnData.postCommentDtoList)
                     }else{
                         num ==1 ? this.notComment = true : this.hintNoMore = true;
+                        num ==1 ? this.hintNoMore = false : this.notComment = false;
                         this.scrollerStatus.pullupStatus = 'disabled';
                     }
                  }else{
                     num ==1 ? this.notComment = true : this.hintNoMore = true;
+                    num ==1 ? this.hintNoMore = false : this.notComment = false;
                     this.scrollerStatus.pullupStatus = 'disabled';
                  }
                 console.log(res.data.data.returnData.postCommentDtoList)
             }).catch(err =>{
+                this.isLoading = false;
                 num ==1 ? this.notComment = true : this.hintNoMore = true;
+                num ==1 ? this.hintNoMore = false : this.notComment = false;
                 this.scrollerStatus.pullupStatus = 'disabled';
                 console.log(err)
             })
@@ -305,7 +313,7 @@ export default {
                 console.log(res)
                 if(res.data.code == '001'){
                     this.$vux.toast.text('点赞成功');
-                    this.isDianzan = true
+                    this.postDetail.alreadyLikePost = true
                     item.likeNum +=1;
                 }else{
                     this.$vux.toast.text('你已经点过赞了');
@@ -326,10 +334,14 @@ export default {
                 this.$http.get(this.$conf.env.getWxJsSdkSignature  + "?url=" +encodeURIComponent(window.location.href)).then(res =>{
                     var optionObj={
                         title: this.processStr(option.data.data.postDesc, 7),
-                        link: encodeURIComponent(window.location.href),
+                        link: window.location.href,
                         imgUrl: option.data.data.imageUrl,
                         desc: option.data.data.postDesc
                     }
+                    
+                    alert('下面弹出来的是link')
+                    alert(optionObj.link)
+
                     var params ={
                         "openId":this.getCookie('openid'),
                         "postId":this.$route.query.id
