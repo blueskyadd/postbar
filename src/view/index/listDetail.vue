@@ -1,7 +1,7 @@
 <template>
      <div class="listDetail" ref='scrollList'>
          <div class="detail-header border-bottom">
-            <div class="blue_kit_left"   @click="$router.go(-1)" ></div>
+            <div class="blue_kit_left"   @click="goBack" ></div>
             
          </div>
          <scroller v-model="scrollerStatus" lock-x scrollbar-y ref="scroller"
@@ -175,8 +175,9 @@ export default {
         },100)
     },
     methods:{
-        aaa(data,key){
-            console.log("aaaaaaaaaa",data,key)
+        goBack(){
+            this.$route.params.form ?  this.$router.go(-1) : this.$router.replace({name:'index'})
+           
         },
         logIndexChange (arg) {
             console.log(arg)
@@ -339,8 +340,8 @@ export default {
                         desc: option.data.data.postDesc
                     }
                     
-                    alert('下面弹出来的是link')
-                    alert(optionObj.link)
+                    // alert('下面弹出来的是link')
+                    // alert(optionObj.link)
 
                     var params ={
                         "openId":this.getCookie('openid'),

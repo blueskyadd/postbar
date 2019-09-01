@@ -23,7 +23,7 @@ header{
     background: #fff;
     display: flex;
     
-    .router-link-exact-active{
+    .router-link-exact-active,.router-link-active{
         div{
             height: .88rem;
             line-height: .88rem;

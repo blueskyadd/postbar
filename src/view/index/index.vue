@@ -1,65 +1,95 @@
 <template>
-    <div class="post_list">
-        <scroller v-model="scrollerStatus"  lock-x scrollbar-y ref="scroller"
-            :use-pullup="showUp"   :pullup-config="upobj" @on-pullup-loading="selPullUp">
-            <ul>
-                <li  v-for="(item, index) in poatList" :key="index"  @click="golistDetaiil(item)">
-                    <header>
-                        <div class="photoImg"><img :src="item.headImg" alt=""></div>
-                        <div  class="content">
-                            <h4 class="title">{{item.userName}}</h4> 
-                            <div class="sub-title">
-                                <span class="forumname">二手吧</span>
-                                <span class="split"></span> 
-                                <span class="createtime">{{item.publishTime}}</span>
-                            </div>
+    <!-- <div  class="homeIndex" style="height:100%"> -->
+            <!-- <tab :line-width=2 active-color='#119dfc' v-model="index" v-if="!isTablebar">
+                <tab-item class="vux-center" :selected="demo2 === item" v-for="(item, index) in list2" @click="demo2 = item" :key="index">{{item}}</tab-item>
+            </tab> -->
+            <!-- <swiper v-model="index" height="100px" :show-dots="false">
+                <swiper-item v-for="(item, index) in list2" :key="index"> -->
+                    <div class="post_list" ref="navBar">
+                        <div class="homeIndex_postList" v-if="isTablebar"   >
+                            <ul class="titleList">
+                                <li class=" vux-1px-b"><span>二手</span></li>
+                                <li class="vux-1px-l vux-1px-b"><span>推荐</span></li>
+                                <li class="vux-1px-l vux-1px-b"><span>热议</span></li>
+                                <li class="vux-1px-l vux-1px-b"><span>娱乐</span></li>
+                                <li><span>风景</span></li>
+                                <li class="vux-1px-l "><span>风景</span></li>
+                                <li class="vux-1px-l"><span>读书</span></li>
+                                <li class="vux-1px-l " @click="goList"><span>查看全部</span></li>
+                            </ul>
+                            <h3 class="vux-1px-b">热议</h3>
                         </div>
-                    </header>
-                    <div  class="main-context">
-                        <p  class="forum-sub-title" >{{item.postDesc}}</p>
-                        <div class="sudoku">
-                            <div class="sudoku-wrap">
-                                <span class="img-item" v-for="(imglist, index) in item.postImgList" :key="index" v-if="index < 3">
-                                    <img alt="" :src="imglist">
-                                </span>
+                        <tab :line-width=2 active-color='#119dfc' v-model="index" v-if="!isTablebar">
+                            <tab-item class="vux-center" :selected="demo2 === item" v-for="(item, index) in list2" @click="demo2 = item" :key="index">{{item}}</tab-item>
+                        </tab>
+                            <div class="scroller" ref="scroller">
+                                <!-- <swiper v-model="index"  :show-dots="false">
+                                <swiper-item v-for="(item, index) in list2" :key="index"> -->
+                                <ul :style="{'padding-top':isTablebar?'':'1rem'}">
+                                    <li  v-for="(item, index) in poatList" :key="index"  @click="golistDetaiil(item)">
+                                        <header>
+                                            <div class="photoImg"><img :src="item.headImg" alt=""></div>
+                                            <div  class="content">
+                                                <h4 class="title">{{item.userName}}</h4> 
+                                                <div class="sub-title">
+                                                    <span class="forumname">二手吧</span>
+                                                    <span class="split"></span> 
+                                                    <span class="createtime">{{item.publishTime}}</span>
+                                                </div>
+                                            </div>
+                                        </header>
+                                        <div  class="main-context">
+                                            <p  class="forum-sub-title" >{{item.postDesc}}</p>
+                                            <div class="sudoku">
+                                                <div class="sudoku-wrap">
+                                                    <span class="img-item" v-for="(imglist, index) in item.postImgList" :key="index" v-if="index < 3">
+                                                        <img alt="" :src="imglist">
+                                                    </span>
+                                                </div>
+                                            </div> 
+                                            <div  class="interaction">
+                                                <div class="wrap">
+                                                    <a class="item comment itemonly" >
+                                                        <i class="icon iconfont icon-xiaoxi"></i>
+                                                        {{item.commentNum||0}}
+                                                    </a>
+                                                    <a class="item comment itemonly">
+                                                        <i class="iconfont icon-fenxiang1"></i>
+                                                        {{item.shareNum||0}}
+                                                    </a>    
+                                                    <a class="item comment itemonly" :style="{color: item.isDianzan? '#119dfc':''}">
+                                                        <i class="icon iconfont icon-dianzan"></i>
+                                                        {{item.likeNum||0}}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li v-if="isLoader" class="isLoader">
+                                        <load-more :show-loading="false" tip="已经加载全部数据" background-color="#fbf9fe"></load-more>
+                                    </li>
+                                </ul>
+                                <!-- </swiper-item>
+                        </swiper> -->
                             </div>
-                        </div> 
-                        <div  class="interaction">
-                            <div class="wrap">
-                                <a class="item comment itemonly" >
-                                    <i class="icon iconfont icon-xiaoxi"></i>
-                                    {{item.commentNum||0}}
-                                </a>
-                                <a class="item comment itemonly">
-                                    <i class="iconfont icon-fenxiang1"></i>
-                                    {{item.shareNum||0}}
-                                </a>    
-                                <a class="item comment itemonly" :style="{color: item.isDianzan? '#119dfc':''}">
-                                    <i class="icon iconfont icon-dianzan"></i>
-                                    {{item.likeNum||0}}
-                                </a>
-                            </div>
-                        </div>
+                         
                     </div>
-                </li>
-                <li v-if="isLoader" class="isLoader">
-                    <load-more :show-loading="false" tip="已经加载全部数据" background-color="#fbf9fe"></load-more>
-                </li>
-            </ul>
-        </scroller>
-        <loading v-model="showloading" :text="textloading"></loading>
-        <button @click.stop="goReleaseContent"><img src="../../assets/img/issueLu.png" alt=""></button>
-        <alert v-model="showSearchLink" title="分享" content="点击右上角按钮进行分享吧"></alert>
-    </div>
+                <!-- </swiper-item> -->
+            <!-- </swiper> -->
+        <!-- </div> -->
 </template>
 <script>
-import {Scroller, Loading, LoadMore,Alert } from 'vux';
+import {Scroller, Loading, LoadMore,Alert ,Tab, TabItem,Swiper, SwiperItem } from 'vux';
 import wx from 'weixin-js-sdk' 
+const list = () => ['精选', '美食', '电影', '酒店', '外卖','更多']
 export default {
     name:'index',
-    components:{Scroller, Loading, LoadMore,Alert},
+    components:{Scroller, Loading, LoadMore,Alert,Tab, TabItem,Swiper, SwiperItem },
     data(){
         return{
+            list2: list(),
+            index: 0,
+            demo2: '精选',
             poatList:[],
             showloading: false,//加载logo
             textloading: '加载中',
@@ -92,15 +122,16 @@ export default {
             pagenumber: 1,
             isLoader: false,
             isDianzan:false,
-            showSearchLink: false
+            showSearchLink: false,
+            refrseh: true,
+            isTablebar:true
         }
     },
     methods:{
         golistDetaiil(item){
-            this.$router.push({path: '/listDetail',query:{id: item.postId}})
+            this.$router.push({path: '/listDetail',query:{id: item.postId,form:false}})
         },
         goReleaseContent(){
-           
             var openid = this.$route.query.openid;
             if(typeof openid !== 'undefined') {
                 var exp = new Date();
@@ -118,10 +149,9 @@ export default {
         selPullUp () {
             console.log('加载')
             this.pagenumber += 1;
+            this.refrseh = false;
             this.getPostList(this.pagenumber)
-            this.$nextTick(() => {
-                this.$refs.scroller.reset()
-            })
+
         },
         /**@name 加载数据 */
         getPostList(number,flag){
@@ -133,21 +163,13 @@ export default {
                 "pageSize": 10,//pageSize
             }
             this.$http.post(this.$conf.env.getPostList, params).then(res =>{
-            console.log('aaaa')
                 if(res.status == '200'){
                     if(res.data.code == '001'){
                         if(res.data.data.returnData && res.data.data.returnData.length>0){
-                            this.scrollerStatus.pullupStatus = 'default';
-                            res.data.data.returnData.forEach(element => {
-                                // element.isDianzan = false;
-                            });
-                            this.$nextTick(() => {
-                                this.$refs.scroller.reset()
-                            })
-                            // flag ? this.$refs.scroller.donePulldown() : ''
+                            this.refrseh = true;
                             this.isLoader = false;
                         }else{
-                            this.scrollerStatus.pullupStatus = 'disabled';
+                            this.refrseh = false;
                             this.isLoader = true;
                         }
                         
@@ -155,12 +177,12 @@ export default {
                     }else{
                         this.poatList = [];
                         this.isLoader = true;
-                        this.scrollerStatus.pullupStatus = 'disabled';
+                        this.refrseh = false;
                     }
                 }else{
                     this.poatList = [];
                     this.isLoader = true;
-                     this.scrollerStatus.pullupStatus = 'disabled';
+                    this.refrseh = false;
                 }
             }).catch(err =>{
                 console.log(err)
@@ -185,15 +207,41 @@ export default {
             else
                 return null;
         },
-    },
-    activated () {
-      this.$refs.scroller.reset()
+        goList(){
+            this.$router.push({name:'homeIndex'})
+        }
     },
     mounted(){
         this.getPostList(1)
-        this.$nextTick(() => {
-            this.$refs.scroller.reset({top: 0})
+        var _that= this
+        this.$bus.$on('changeTab',(data)=>{
+            if(data){
+                alert('a')
+                // _that.$refs.scroller.scrollTop = 22
+                _that.isTablebar = false;
+                _that.demo2 = data;
+            }
         })
+        // 注册scroll事件并监听
+        let _this = this;
+        this.$refs.scroller.addEventListener('scroll', function () {
+            var topScroll = _this.$refs.scroller.scrollTop ;
+            // console.log(_this.$refs.scroller.scrollTop)
+            //判断距离顶部的距离
+            if (topScroll > 25 || topScroll == 25) {
+                // console.log('开')
+                _this.isTablebar =  false;
+
+            } else {
+                // console.log('关')
+                 _this.isTablebar = true;
+            }
+            // 判断是否滚动到底部
+            if (topScroll > _this.$refs.scroller.scrollHeight -  _this.$refs.scroller.clientHeight - 200 && _this.refrseh) {
+                // 如果开关打开则加载数据
+                _this.selPullUp()
+            }
+        });
         var openid = this.$route.query.openid;
         if(typeof openid !== 'undefined') {
 	          var exp = new Date();
@@ -207,9 +255,64 @@ export default {
 };
 </script>
 <style lang="scss">
+ .vux-swiper-item,.vux-slider,.vux-swiper{
+    height: 100%!important;
+}
+
 .post_list {
     height: calc(100% - .88rem);
     overflow: hidden;
+    .titleList{
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: .4rem .2rem .2rem;
+    // padding-top: .2rem;
+    border-radius: .3rem;
+    overflow: hidden;
+    background: linear-gradient(to right,#fa5956,#fb8650 54%);
+        // background: linear-gradient(to right,#ffbc49,#ffd252);
+    // background: #000 url('https://img.tukuppt.com/bg_grid/00/03/57/pEfqIMlZvO.jpg!/fh/350') 0 0 /100% 100%;
+        // background: linear-gradient(to right,#34c2aa,#6cd557);
+        background: linear-gradient(to right,#ffbc49,#ffd252);
+            background: linear-gradient(to right,rgba(75, 143, 237, 1),#53bced);
+    
+    li{
+        width: 24.9%;
+        margin-bottom: 0;
+        // margin-right: .01rem;
+        height: 1rem;
+        // margin-bottom: .02rem;
+        background: transparent;
+        // background: rgba(52, 194, 170,.6);
+        // box-shadow: 0 .01rem .02rem .021rem #999;
+        // border-radius: .05rem;
+        font-size: .3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        padding: .2rem;
+    }
+    
+    
+}
+h3{
+        width: 100%;
+        height: .88rem;
+        font-size: .34rem;
+        background: #fff;
+        text-align: center;
+        line-height: .88rem;
+    }
+    .scroller{
+        height: 100%;
+        overflow-y: scroll;
+    }
+    .scroller::-webkit-scrollbar{
+        display: none;
+    }
     .xs-plugin-pulldown-container, .xs-plugin-pullup-container{
         font-size: .32rem;
         color: #666;
@@ -222,11 +325,17 @@ export default {
     }
   ul {
       height: 100%;
+      height:calc(100% - 4rem);
       background: #f5f5f5;
     li {
       padding-top: 0.34rem;
       background: #fff;
       margin-bottom: .34rem;
+    //   .homeIndex{
+           
+            // padding: .4rem .2rem .2rem;
+            
+        // }
       header {
         height: 0.7rem;
         display: flex;

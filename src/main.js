@@ -12,7 +12,7 @@ import http from "./track/http.js";
 
 Vue.prototype.$http = http;
 Vue.prototype.$conf = conf;
-
+Vue.prototype.$bus = new Vue();
 import  { LoadingPlugin, ToastPlugin  } from 'vux'
 Vue.use(LoadingPlugin)
 Vue.use(ToastPlugin, {position: 'default'})

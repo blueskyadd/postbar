@@ -14,6 +14,11 @@ export default new Router({
       component:() => import('@/view/index/index'),
     },
     {
+      path: '/homeIndex',
+      name: 'homeIndex',
+      component:() => import('@/view/index/home'),
+    },
+    {
       path: '/listDetail',
       name: 'listDetail',
       component:() => import('@/view/index/listDetail'),
