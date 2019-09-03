@@ -72,7 +72,7 @@
                                 <!-- </swiper-item>
                         </swiper> -->
                             </div>
-                         
+                          <button @click="goReleaseContent"><img src="../../assets/img/issueLu.png" alt=""></button>
                     </div>
                 <!-- </swiper-item> -->
             <!-- </swiper> -->

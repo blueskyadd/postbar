@@ -98,17 +98,24 @@
         <div v-transfer-dom v-if="postDetail.postDetailDto">
             <previewer :list="postDetail.postDetailDto.imgUrlList" ref="previewer" :options="options" @on-index-change="logIndexChange"></previewer>
         </div>
+        <div v-transfer-dom>
+            <popup v-model="showAccounts" height="4rem" is-transparent>
+                <div style="width: 95%;background-color:#fff;height:3.7rem;margin:0 auto;border-radius:5px;padding-top:10px;">
+                    关注公众号
+                </div>
+            </popup>
+        </div>
         <alert v-model="showSearchLink" title="分享" content="点击右上角按钮进行分享吧"></alert>
      </div>
 </template>
 <script>
-import { Previewer, TransferDom, Scroller, Alert, Popover} from 'vux';
+import { Previewer, TransferDom, Scroller, Alert, Popover, Popup} from 'vux';
 import wx from 'weixin-js-sdk';
 import wxapi from '../../components/sdk';
 export default {
     name:'listDetail',
     directives: {TransferDom},
-    components: { Previewer, Scroller, Alert, Popover},
+    components: { Previewer, Scroller, Alert, Popover, Popup},
     data(){
         return{
             list: [],
@@ -152,7 +159,9 @@ export default {
             pagenumber: 1,
             isDianzan: false,
             showSearchLink:false,
-            isTextarea: false
+            isTextarea: false,
+            showAccounts:false,
+            isshowAccounts:false
         }
     },
     created(){
@@ -166,6 +175,7 @@ export default {
         //分享
         this.getPostDetail();
         this.getPostCommentDetail(1);
+        this.hasSubscribeWxMp();
         var that = this;
         setTimeout(()=>{
             var box = document.getElementById('scrollbar')
@@ -196,6 +206,14 @@ export default {
         setTextarea(){
             this.isTextarea = true;
         },
+        hasSubscribeWxMp(){
+            this.$http.get(this.$conf.env.hasSubscribeWxMp+'?openId=' + this.getCookie('openid')).then(res =>{
+                this.isshowAccounts = res.data.data
+            }).catch(err =>{
+                return false
+                console.log(err)
+            })
+        },
         savePostComment(){
             var openid = this.$route.query.openid;
             if(typeof openid !== 'undefined') {
@@ -207,21 +225,27 @@ export default {
             if(this.getCookie('openid')==null) {
                 window.location.href =this.$conf.env.wxLogin + '?returnUrl=' + encodeURIComponent('http://forum.vxiangwang.com/#/');
             }else{
-                var params ={
-                    "commentContent": this.commentContent,//评价内容
-                    "createBy": this.getCookie('openid'),//评论人
-                    "parentCommentId": 0,//评论上级主键 默认0 无上级
-                    "postId": this.$route.query.id,//帖子主键
-                    "openId": this.getCookie('openid'),//微信用户openID
+                if(!this.isshowAccounts){
+                    this.showAccounts = true;
+                    return false
+                }else{
+                    var params ={
+                        "commentContent": this.commentContent,//评价内容
+                        "createBy": this.getCookie('openid'),//评论人
+                        "parentCommentId": 0,//评论上级主键 默认0 无上级
+                        "postId": this.$route.query.id,//帖子主键
+                        "openId": this.getCookie('openid'),//微信用户openID
+                    }
+                    this.$http.post(this.$conf.env.savePostComment,params).then(res =>{
+                        console.log(res)
+                        this.$vux.toast.text('评论成功');
+                        this.commentContent = '';
+                        this.getPostCommentDetail(1);
+                    }).catch(err =>{
+                        console.log(err)
+                    })
                 }
-                this.$http.post(this.$conf.env.savePostComment,params).then(res =>{
-                    console.log(res)
-                    this.$vux.toast.text('评论成功');
-                    this.commentContent = '';
-                    this.getPostCommentDetail(1);
-                }).catch(err =>{
-                    console.log(err)
-                })
+                
             }
             
         },

@@ -20,26 +20,33 @@
                 </div>
             </div>
             <div class="detailphoto">
-                    <div v-for="(item, index) in detailphone" :key="index" class="dragpic">
-                        <i class="iconfont icon-close delete" @click.stop="deleteDataPic(item,index)"></i>
-                        <img @click="show(index)" class="previewer-demo-img"  :src="item.src"  alt="">
-                    </div>
-                    <div class="btn_upload" v-if="detailphone.length<9"><span  @click="onPickFile"><input ref="fileInput"  accept="image/*"  @change="getFile"   style="display: none" type="file" ></span></div>
+                <div v-for="(item, index) in detailphone" :key="index" class="dragpic">
+                    <i class="iconfont icon-close delete" @click.stop="deleteDataPic(item,index)"></i>
+                    <img @click="show(index)" class="previewer-demo-img"  :src="item.src"  alt="">
+                </div>
+                <div class="btn_upload" v-if="detailphone.length<9"><span  @click="onPickFile"><input ref="fileInput"  accept="image/*"  @change="getFile"   style="display: none" type="file" ></span></div>
             </div>
         </div>
          <!-- //大图展 -->
         <div v-transfer-dom v-if="detailphone">
             <previewer :list="detailphone" ref="previewer" :options="options"></previewer>
         </div>
+        <div v-transfer-dom>
+            <popup v-model="showAccounts" height="4rem" is-transparent>
+                <div style="width: 95%;background-color:#fff;height:3.7rem;margin:0 auto;border-radius:5px;padding-top:10px;">
+                    关注公众号
+                </div>
+            </popup>
+        </div>
     </div>
 
 </template>
 <script>
-import { Previewer, TransferDom } from 'vux';
+import { Previewer, TransferDom, Popup} from 'vux';
 export default {
     name:'releaseContent',
     directives: {TransferDom},
-    components: { Previewer},
+    components: { Previewer,Popup},
     data(){
         return{
             contents:'',
@@ -59,6 +66,8 @@ export default {
                 // http://javascript.info/tutorial/coordinates
                 }
             },
+            showAccounts:false,
+            isshowAccounts:false
         }
     },
     created(){
@@ -68,7 +77,7 @@ export default {
         this.$emit('showheader',true)
     },
     mounted(){
-        
+        this.hasSubscribeWxMp()
     },
     methods:{
         onPickFile(){
@@ -113,6 +122,14 @@ export default {
                 console.log(err)
             })
         },
+        hasSubscribeWxMp(){
+            this.$http.get(this.$conf.env.hasSubscribeWxMp+'?openId=' + this.getCookie('openid')).then(res =>{
+                    this.isshowAccounts = res.data.data
+            }).catch(err =>{
+                return false
+                console.log(err)
+            })
+        },
         getCookie(name) {
             var arr;
             var reg = new RegExp('(^| )' +name+"=([^;]*)(;|$)");
@@ -129,7 +146,15 @@ export default {
                 this.$vux.toast.text('您还没有输入内容哦')
                 return false;
             }else{
-                return true;
+                console.log('res.data.data',this.isshowAccounts)
+                if(!this.isshowAccounts){
+                //    this.$vux.toast.text('请先关注公众号')
+                   this.showAccounts = true;
+                    return false; 
+                }else{
+                    return true;
+                }
+                
             }
         },
         deleteDataPic(item, index){

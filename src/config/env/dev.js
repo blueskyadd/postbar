@@ -21,4 +21,5 @@ module.exports = {
     getMyPostList: winchaingroupApi + 'api/post/getMyPostList',//获取用户个人中心帖子列表(支持分页)
     deleteMyPost: winchaingroupApi + 'api/post/deleteMyPost',//删除我的帖子
     updateShareCount: winchaingroupApi + 'api/post/updateShareCount',//更新帖子分享数
+    hasSubscribeWxMp: winchaingroupApi + 'api/wx/hasSubscribeWxMp',//判断用户是否已经关注过公众号 true 是 false 否
 }
